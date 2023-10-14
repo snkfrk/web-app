@@ -1,0 +1,166 @@
+{% extends 'accounts_app/base.html' %} {% block title %}ユーザ情報{% endblock %}
+{% block content %}
+<div class="container">
+  <!-- 問2-11 h1 タグの Test さんの TODO となっている Test の部分を user の username としましょう。 -->
+  <h1>{{ user.username }}さんのTODO</h1>
+  <!-- 問3-14 form の action 属性に url add を追加しましょう。 -->
+  <form action="{% url 'add' %}" method="post" class="">
+    <!-- 問3-15 form タグの中に csrf_token を追加しましょう。 -->
+    {% csrf_token %}
+    <!-- 問9-9 form タグの中の form.as_p 表示タグの上にカレンダーを使用する文を追加しましょう。 -->
+    {% bootstrap_javascript jquery='full' %} {{ form.media }}
+    <!-- 問3-15 form タグの中に form を追加しましょう。form は p として表示させます。 -->
+    {{ form.as_p }}
+    <button class="btn btn-primary">追加</button>
+  </form>
+  <!-- 問8-13 タスク追加 form タグの下に TODO 件数表示させましょう。 -->
+  <p class="mb-0">TODO件数:{{ todo_number }}件</p>
+  <p class="">
+  <!-- 問8-13 タスク追加 form タグの下に 完了件数を表示させましょう。 -->
+  完了件数:{{ done_number }}件
+    <!-- 問8-13 タスク追加 form タグの下に 期限内完了、％を表示させましょう。％は、整数の丸め込みを行いたいので、floatformat:0 を使って表示させましょう。 -->
+    期限内完了:{{ within }}件（{{ ratio|floatformat:0 }}%）
+  </p>
+  <!-- tableタグを使い、TODOリストを出力する -->
+  {% if incomplete %}
+  <h2 class="fw-bold">TODOリスト</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>TODO</th>
+        <th>期限</th>
+        <th>作成日</th>
+        <th>更新日</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in incomplete %}
+      <tr>
+        <td>{{ i.id }}</td>
+        <!-- 期限が本日以前の場合は、赤く表記する -->
+        {% if i.deadline <= today %}
+        <td class="text-danger">{{ i.title }}</td>
+        {% else %}
+        <td>{{ i.title }}</td>
+        {% endif %}
+        <td>{{ i.deadline }}</td>
+        <td>{{ i.created_date }}</td>
+        <td>{{ i.update_date }}</td>
+        <td class="px-0">
+          <!-- 問5-7 一つ目の table タグの中の修正をしていきます。 button タグに onclick 属性を適用します。location.href とすることで、button タグが a タグのような link を指定することができます。url には update を指定して、引数には id を渡しましょう。 -->
+          <button
+            class="btn btn-sm btn-primary"
+            onclick="location.href='{% url 'update' i.id %}'"
+          >
+            修正
+          </button>
+        </td>
+        <td class="px-0">
+          <!-- 問6-7 一つ目の table タグの中の完了 button タグに done までの url を追加しましょう。 -->
+          <button
+            onclick="location.href='{% url 'done' i.id %}'"
+            class="btn btn-sm btn-primary"
+          >
+            完了
+          </button>
+        </td>
+        <td class="px-0">
+          <!-- 問7-7 一つ目の table タグの中の削除 button に delete までの url を追加しましょう。 -->
+          <button
+            onclick="location.href='{% url 'delete' i.id %}'"
+            class="btn btn-sm btn-danger"
+          >
+            削除
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <!-- tableタグを使い、完了リストを出力する -->
+  {% if done %}
+  <h2>完了リスト</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>TODO</th>
+        <th>期限</th>
+        <th>作成日</th>
+        <th>完了日</th>
+        <th>期限内完了</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in done %}
+      <tr>
+        <!-- idを出力する -->
+        <td>{{ i.id }}</td>
+        <!-- titleを出力する -->
+        <td>{{ i.title }}</td>
+        <!-- 期限を出力する -->
+        <td>{{ i.deadline }}</td>
+        <!-- 作成日を出力する  -->
+        <td>{{ i.created_date }}</td>
+        <!-- 期限日を出力する  -->
+        <td>{{ i.finished_date }}</td>
+        {% if i.deadline >= i.finished_date %}
+        <td>○</td>
+        {% else %}
+        <td>×</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <nav aria-label="ページ送り">
+    <ul class="pagination justify-content-center">
+      <!-- 現在のページと最初のページが等しい場合 -->
+      {% if done.number == 1 %}
+      <li class="page-item disabled">
+        <a class="page-link" href="/1">最初へ</a>
+      </li>
+      <!-- 現在のページと最初のページが等しくない場合 -->
+      {% else %}
+      <li class="page-item">
+        <a class="page-link" href="/1">最初へ</a>
+      </li>
+      {% endif %} {% if done.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="/{{done.previous_page_number}}"
+          >{{done.previous_page_number}}</a
+        >
+      </li>
+      {% endif %}
+      <li class="page-item active" aria-current="page">
+        <a class="page-link" href="#">{{ done.number }}</a>
+      </li>
+      {% if done.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="/{{ done.next_page_number }}"
+          >{{ done.next_page_number }}</a
+        >
+      </li>
+      {% endif %}
+
+      <!-- 現在のページと最後のページが等しい場合 -->
+      {% if done.number == done.paginator.num_pages %}
+      <li class="page-item disabled">
+        <a class="page-link" href="/{{ done.paginator.num_pages }}">最後へ</a>
+      </li>
+      <!-- 現在のページと最後のページが等しくない場合 -->
+      {% else %}
+      <li class="page-item">
+        <a class="page-link" href="/{{ done.paginator.num_pages }}">最後へ</a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  <p class="text-end">
+    <a href="{% url 'logout' %}">ログアウト</a>
+  </p>
+</div>
+{% endblock %}
