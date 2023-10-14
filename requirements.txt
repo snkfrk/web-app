@@ -1,0 +1,4 @@
+Django
+psycopg2
+django-bootstrap4
+django-bootstrap-datepicker-plus
